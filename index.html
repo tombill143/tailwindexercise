@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Country Images</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.17/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      font-size: 10px;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding-top: 2em;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      margin: 4em;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      position: relative;
+    }
+
+    .close-button {
+      position: absolute;
+      font-size: 1.5rem;
+      top: 0.5rem;
+      right: 1rem;
+      cursor: pointer;
+    }
+
+    
+  </style>
+</head>
+<body class="m-20 p-20 bg-gray-200">
+  <div class="flex justify-center items-center h-20">
+    <input id="search-input" type="text" placeholder="Search for a country..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-300">
+  </div>
+  <h1 class="text-6xl font-bold text-center">A Database of Countries</h1>
+  <div id="country-container" class="grid grid-cols-3 gap-4 mt-8"></div>
+
+  <div id="modal" class="modal">
+    <div id="modal-content" class="modal-content">
+    </div>
+  </div>
+
+  <script>
+fetch("https://restcountries.com/v3.1/all")
+  .then(response => response.json())
+  .then(data => {
+    const countryContainer = document.getElementById("country-container");
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modal-content");
+
+    data.forEach(country => {
+      const countryName = country.name.common;
+      const imageUrl = country.flags.svg;
+      const infoList = [];
+
+      function formatValue(value) {
+        if (Array.isArray(value)) {
+          return value.map(item => formatValue(item)).join(", ");
+        } else if (typeof value === "object") {
+          return Object.values(value).map(item => formatValue(item)).join(", ");
+        } else {
+          return value;
+        }
+      }
+
+      for (const key in country) {
+        if (country.hasOwnProperty(key) && key !== "flags") {
+          const value = formatValue(country[key]);
+          const info = `<p><strong>${key}:</strong> ${value}</p>`;
+          
+          infoList.push(info);
+        }
+      }
+
+      const countryCard = document.createElement("div");
+      countryCard.className = "country-card p-4 border border-gray-300 bg-yellow-50 rounded-lg text-center cursor-pointer";
+      countryCard.dataset.countryName = countryName.toLowerCase();
+      const img = document.createElement("img");
+      img.src = imageUrl;
+      img.className = "w-full h-60 object-cover rounded-md";
+
+      const caption = document.createElement("p");
+      caption.className = "mt-2 font-bold";
+      caption.textContent = countryName;
+
+      const population = document.createElement("p");
+      population.textContent = `Population: ${country.population}`;
+      
+      const capital = document.createElement("p");
+      capital.textContent = `Capital: ${country.capital}`;
+
+      const region = document.createElement("p");
+      region.textContent = `Region: ${country.region}`;
+
+
+      countryCard.appendChild(img);
+      countryCard.appendChild(caption);
+      countryCard.appendChild(population);
+      countryCard.appendChild(region);
+      countryCard.appendChild(capital);
+
+      countryCard.addEventListener("click", () => {
+        const modalHtml = `
+          <h2 class="text-2xl font-bold mb-4">${countryName}</h2>
+          ${infoList.join("")}
+          <span id="close-button" class="close-button">&times;</span>
+        `;
+        modalContent.innerHTML = modalHtml;
+        modal.style.display = "flex";
+
+        const closeButton = document.getElementById("close-button");
+        closeButton.addEventListener("click", () => {
+          modal.style.display = "none";
+        });
+      });
+
+      countryContainer.appendChild(countryCard);
+    });
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+  })
+  .catch(error => {
+    console.log("Error fetching country data:", error);
+  });
+
+
+
+    const searchInput = document.getElementById("search-input");
+    searchInput.addEventListener("input", function() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const countryCards = document.querySelectorAll(".country-card");
+
+      countryCards.forEach(card => {
+        const countryName = card.dataset.countryName;
+        if (countryName.includes(searchTerm)) {
+          card.style.display = "block";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    });
+  </script>
+
+  <style>
+      @media (max-width: 640px) {
+      .country-card {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+      }
+
+      h1{
+        font-size: 25px !important;
+      }
+
+      .country-card img {
+        height: auto;
+        margin-bottom: 1rem;
+      }
+
+      .country-card p {
+        margin: 0.5rem 0;
+      }
+
+      /* Override the grid classes for smaller screens */
+      #country-container.grid {
+        grid-template-columns: 1fr 1fr;
+        justify-content: center;
+      }
+    }
+
+  </style>
+</body>
+</html>
